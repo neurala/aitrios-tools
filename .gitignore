@@ -1,0 +1,96 @@
+####################
+# B4B scripts and other
+####################
+
+# Logging
+log_verbose.txt
+*.log
+
+# Build directories
+*build*/
+*Build*/
+*BUILD*/
+
+####################
+# CMake
+####################
+
+# Artefacts of CMake error build
+CMakeFiles/
+CMakeCache.txt
+
+# User config
+CMakeUserPresets.json
+
+####################
+# Apple
+####################
+
+**/.DS_Store
+*.ipa
+*.aux
+
+####################
+# Editors
+####################
+
+~*.*
+.ftpignore
+*.swp
+
+# Qt Creator
+CMakeLists.txt.user
+*.pro.user
+
+# KDE
+.directory
+*.kdev4
+*.kate-swp
+
+# Eclipse
+.project
+.cproject
+
+# Visual Studio Code
+.vscode/
+*.vscode/
+.devcontainer/
+
+# gtags stuff
+GPATH
+GRTAGS
+GTAGS
+
+# Visual Studio
+.vs
+CMakeSettings.json
+
+# Vim
+.tasks
+.vim*/
+
+# CLion
+.idea/
+venv/
+
+# Xcode
+xcuserdata
+*.xcuserstate
+*.xccheckout
+
+####################
+# Misc.
+####################
+
+*~
+**/*~
+\#*\#
+*.aux
+*.gz
+*.autosave
+tags
+*.pyc
+**.hsh
+*.aar
+*.mp3
+*.svm
