@@ -94,3 +94,5 @@ tags
 *.aar
 *.mp3
 *.svm
+
+aitrios_console_configuration.json
