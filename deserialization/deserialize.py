@@ -46,8 +46,12 @@ def printHiFiResults(results: HifiResults):
     print(f'AnomalyScore: {results.AnomalyScore()}')
 
     print('Heatmap:')
-    for row in np.reshape(results.HeatmapAsNumpy(), (results.Width(), results.Height())):
-        print("\t".join(map(str, row)))
+    scaled_values = np.interp(results.HeatmapAsNumpy(), (0, 1), (1, 9))
+    rounded_values = np.round(scaled_values).astype(int)
+    heatmap = np.reshape(rounded_values, (results.Width(), results.Height()))
+
+    for row in heatmap:
+        print("".join(map(str, row)))
 
 
 if __name__ == "__main__":
