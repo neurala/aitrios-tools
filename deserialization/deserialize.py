@@ -37,7 +37,7 @@ def deserializeAs(data: str, type: ResultType):
     if type == ResultType.AnomalyHIFI:
         return HifiResults.GetRootAsHifiResults(data, 0)
     else:
-        raise ValueError{f'Unknown result type "{type}"'}
+        raise ValueError(f'Unknown result type "{type}"')
 
 def printHiFiResults(results: HifiResults):
     print(f'Width :{results.Width()}')
