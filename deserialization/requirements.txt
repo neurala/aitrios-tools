@@ -1,3 +1,2 @@
 flatbuffers
 numpy
-argparse
