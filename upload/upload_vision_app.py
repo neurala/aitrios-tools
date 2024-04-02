@@ -17,13 +17,12 @@
 # limitations under the License.
 
 import argparse
-from enum import Enum
-
 import base64
 import errno
+import json
+from enum import Enum
 from pathlib import Path
 
-import json
 import jsonschema
 from console_access_library.client import Client
 from console_access_library.common.config import Config
@@ -56,7 +55,7 @@ def convert_file_to_b64_string(file_path):
     with open(file_path, "rb") as f:
         return base64.b64encode(f.read())
 
-def preapare_ppl_file(ppl_path: Path):
+def prepare_ppl_file(ppl_path: Path):
     file_content = convert_file_to_b64_string(ppl_path)
 
     print(f"{ppl_path} is loaded.")
@@ -74,11 +73,7 @@ def get_device_app_status(app_name: str, version_number: str):
     # Flag for import check
     import_flag = False
     # Call an API to get Vision and Sensing Application info
-    try:
-        response = deployment_obj.get_device_apps()
-    except Exception as e:
-        # EXCEPTION
-        raise e
+    response = deployment_obj.get_device_apps()
 
     # response error check
     if "result" in response and response["result"] != "SUCCESS":
@@ -103,7 +98,7 @@ def get_device_app_status(app_name: str, version_number: str):
             version_status, "Unknown status '" + version_status + "'"
         )
     else:
-        raise Exception(
+        raise RuntimeError(
             "Vision and Sensing Application is not found. "
             + " \n\tapp_name: "
             + app_name
@@ -138,7 +133,7 @@ if __name__ == "__main__":
     ppl_file = Path(configuration["ppl_file"])
     if not ppl_file.exists():
         ppl_file = args.configuration_file.parent / ppl_file
-    file_name, file_content = preapare_ppl_file(ppl_file)
+    file_name, file_content = prepare_ppl_file(ppl_file)
 
     client_obj = create_client(args.aitrios_secrets)
     deployment_obj = client_obj.get_deployment()
