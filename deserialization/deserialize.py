@@ -25,7 +25,7 @@ parser.add_argument("--input_file", "-f", type=Path, dest="input_file",
 
 def extractData(json_file: Path):
     # Parse the JSON document
-    root = json.load(json_file.load_text())
+    root = json.loads(json_file.load_text())
 
     # Decode base64 root
     if 'O' in root['Inferences'][0]:
