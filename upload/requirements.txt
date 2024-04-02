@@ -1,23 +1,4 @@
-requests>=2.31.0
-setuptools>=65.5.1
-wheel>=0.37.1
-PyYAML>=6.0
 jsonschema>=4.6.2
-marshmallow>=3.17.0
-pytest>=7.1.2
-pytest-html-reporter>=0.2.9
-pytest-ordering>=0.6
-sphinx==4.3.2
-myst-parser>=0.18.0
-sphinx-rtd-theme>=1.0.0
-sphinxcontrib-napoleon>=0.7
-rst2pdf>=0.99
-streamlit==1.11.1
-pytest-timeout>=2.1.0
-PyJWT>=2.6.0
-nassl>=4.0
-cryptography>=36.0
-validators>=0.18
 git+https://github.com/SonySemiconductorSolutions/aitrios-sdk-console-access-lib-python@v1.0.0#egg=aitrios_console_rest_client_sdk_primitive&subdirectory=lib/python-client
 git+https://github.com/SonySemiconductorSolutions/aitrios-sdk-console-access-lib-python@v1.0.0#egg=console_access_library&subdirectory=src
 
