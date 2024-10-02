@@ -8,7 +8,7 @@ from pathlib import Path
 from console_access_api.aitrios_console import AitriosConsole
 
 parser = argparse.ArgumentParser(
-    description="Uploads WASM application to AITRIOS Console",
+    description="Launches execution on a camera configured in AITRIOS Console",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
 )
 
@@ -31,6 +31,9 @@ parser.add_argument(
 
 
 def load_configuration_file(configuration_path: Path, schema_path: Path):
+    """
+    Parse a secrects configuration file, validates against schema
+    """
     # Load configuration file
     with open(configuration_path, "r") as f:
         configuration = json.load(f)
@@ -45,6 +48,9 @@ def load_configuration_file(configuration_path: Path, schema_path: Path):
 
 
 def create_client(aitrios_secrets):
+    """
+    Create a connection object
+    """
     json_load = load_configuration_file(
         aitrios_secrets, "./json_schemas/console_configuration_schema.json"
     )
@@ -57,8 +63,10 @@ def create_client(aitrios_secrets):
 
 
 def jsonify(data):
+    """
+    Dumnp data as a JSON element, pretty formated
+    """
     return json.dumps(data, indent=4)
-
 
 if __name__ == "__main__":
     print("Initiating Console connection")
@@ -105,7 +113,7 @@ if __name__ == "__main__":
         url="/devices/{device_id}/configuration/logdestination",
         method="PUT",
         device_id=device_id,
-        payload={"level": "Debug", "destination": "Cloud", "SensorRegister": True},
+        payload={"level": "Verbose", "destination": "Cloud", "SensorRegister": True},
     )
     print(jsonify(response))
 
@@ -128,14 +136,27 @@ if __name__ == "__main__":
     )
     print(jsonify(result))
 
-    # 6. Download logs
+    # 5. Download logs
+    # sleeping to make sure all logs are loaded in the database
+    time.sleep(10)
     print("Downloading logs")
+
+    # Hardcoding "top" here to return the N latest logs
     response = client_obj.Request(
-        url="/devices/{device_id}/applogs", method="GET", device_id=device_id
+        url="/devices/{device_id}/applogs?top=59", method="GET", device_id=device_id
     )
     print(jsonify(response))
 
-    # 5. Stop processing
+    # Turning logs off
+    response = client_obj.Request(
+        url="/devices/{device_id}/configuration/applog",
+        method="PUT",
+        device_id=device_id,
+        payload={"enable": False},
+    )
+    print(jsonify(response))
+
+    # 6. Stop processing
     print("Stopping processing")
     response = client_obj.StopUploadInferenceResult(device_id=device_id)
     print(jsonify(response))
