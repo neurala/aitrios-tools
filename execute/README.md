@@ -17,16 +17,17 @@ Use this tool to launches processing and retrieve resutls and logs.
 
 ```bash
 Initiating Console connection
-usage: execute.py [-h] --aitrios_secrets AITRIOS_SECRETS --device_name DEVICE_NAME
+usage: execute.py [-h] --aitrios_secrets AITRIOS_SECRETS --device_name DEVICE_NAME [--stages STAGES]
 
-Uploads WASM application to AITRIOS Console
+Launches execution on a camera configured in AITRIOS Console
 
 optional arguments:
   -h, --help            show this help message and exit
   --aitrios_secrets AITRIOS_SECRETS, -s AITRIOS_SECRETS
                         The path to your AITIRIOS console configuration file (default: None)
   --device_name DEVICE_NAME, -D DEVICE_NAME
-                          Device Name to search for (default: None)
+                        Device Name to search for (default: None)
+  --stages STAGES       Glob patterns to select specific stages (e.g., 'stage_*', 'stage_start_*') (default: None)
 ```
 
 Example:
@@ -34,4 +35,10 @@ Example:
 python -m venv ./venv
 ./venv/bin/python -m pip install -r requirements.txt
 ./venv/bin/python ./execute.py --aitrios_secrets ./secrets.json -D <Device>
+```
+
+Only acquire logs:
+```
+./venv/bin/python ./execute.py --aitrios_secrets ./secrets.json -D <Device> \
+                               --stages 'stage_initialize' --stages 'stage_download_logs'
 ```
