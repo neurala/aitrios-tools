@@ -147,7 +147,7 @@ if __name__ == "__main__":
         url="/devices/{device_id}/applogs?top={topNLogs}",
         method="GET",
         device_id=device_id,
-        topNLogs=topNLogs
+        topNLogs=str(topNLogs)
     )
     print(jsonify(response))
 
