@@ -39,13 +39,11 @@ def load_configuration_file(configuration_path: Path, schema_path: Path) -> dict
     """
     Parse a secrets configuration file, validate against schema
     """
-    # Load configuration file
-    with open(configuration_path, "r") as f:
-        configuration = json.load(f)
-
     # Load configuration schema file
-    with open(schema_path, "r") as f:
-        json_schema = json.load(f)
+    json_schema = json.loads(schema_path.read_text())
+
+    # Load configuration file
+    configuration = json.loads(configuration_path.read_text())
 
     # Validate configuration
     jsonschema.validate(configuration, json_schema)
@@ -57,7 +55,8 @@ def create_client(aitrios_secrets):
     Create a connection object
     """
     config = load_configuration_file(
-        aitrios_secrets, "./json_schemas/console_configuration_schema.json"
+        Path(aitrios_secrets),
+        Path("./json_schemas/console_configuration_schema.json")
     )
     return AitriosConsole(
         config["console_endpoint"],
