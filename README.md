@@ -31,3 +31,7 @@ Deserialization allow you to parse Neurala Applications output.
 ### Model Upload
 
 Allows to upload a WASM appliation to your AITRIOS console.
+
+### Webpages
+
+Collection of statc HTML pages.
