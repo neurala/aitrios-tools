@@ -37,8 +37,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--stages",
-    action='append',
-    help="Glob patterns to select specific stages (e.g., 'stage_*', 'stage_start_*')"
+    action="append",
+    help="Glob patterns to select specific stages (e.g., 'stage_*', 'stage_start_*')",
 )
 
 
@@ -62,8 +62,7 @@ def create_client(aitrios_secrets):
     Create a connection object
     """
     config = load_configuration_file(
-        Path(aitrios_secrets),
-        Path("./json_schemas/console_configuration_schema.json")
+        Path(aitrios_secrets), Path("./json_schemas/console_configuration_schema.json")
     )
     return AitriosConsole(
         config["console_endpoint"],
@@ -98,14 +97,13 @@ class DeviceProcessor:
         self.device_id = None
         self.config_id = None
 
-    def get_device_info(self, verbose:bool=True):
+    def get_device_info(self, verbose: bool = True):
         """
         Retrieves the information about the device selected
         """
         print(f"Looking for device {self.device_name}")
         request = self.client.GetDevices(
-            connectionState="connected",
-            device_name=self.device_name
+            connectionState="connected", device_name=self.device_name
         )
         devices = request["devices"]
         if not devices:
@@ -178,9 +176,7 @@ class DeviceProcessor:
         """
         print("Getting results")
         result = self.client.GetInferenceResults(
-            device_id=self.device_id,
-            NumberOfInferenceresults=1,
-            raw=1
+            device_id=self.device_id, NumberOfInferenceresults=1, raw=1
         )
         print(jsonify(result))
 
@@ -188,20 +184,14 @@ class DeviceProcessor:
         """
         Get the list of edge apps
         """
-        response = self.client.Request(
-            url="/edge_apps",
-            method="GET"
-        )
+        response = self.client.Request(url="/edge_apps", method="GET")
         print(jsonify(response))
 
     def get_deploy_configurations(self):
         """
         Get the list of deploy configurations
         """
-        response = self.client.Request(
-            url="/deploy_configs",
-            method="GET"
-        )
+        response = self.client.Request(url="/deploy_configs", method="GET")
         print(jsonify(response))
 
         if self.configuration_name:
@@ -210,7 +200,7 @@ class DeviceProcessor:
                     return config["config_id"]
         return None
 
-    def _check_deploy_finished(self, filter_by_id:List[str]=None):
+    def _check_deploy_finished(self, filter_by_id: List[str] = None):
         """
         Check if a deployment is in progress
 
@@ -219,17 +209,16 @@ class DeviceProcessor:
 
         # Get all deploys
         response = self.client.Request(
-            url=f"/devices/{self.device_id}/deploys",
-            method="GET"
+            url=f"/devices/{self.device_id}/deploys", method="GET"
         )
 
         # For each deploy config check if it's finished
         for config in response["deploys"]:
-            if filter_by_id and not config['deploy_id'] in filter_by_id:
+            if filter_by_id and not config["deploy_id"] in filter_by_id:
                 continue
 
             # Still deploying something
-            if 'deploy' in config['deploy_status']:
+            if "deploy" in config["deploy_status"]:
                 print(jsonify(config))
                 return False
 
@@ -239,24 +228,30 @@ class DeviceProcessor:
 
     def create_deploy_configuration(self):
         self.get_edge_apps()
-        configuration_name = 'testconfigREST'
-        app_name = "NeuralaHiFiV2Test0"
-        app_version= "1.0.0"
+        configuration_name = "test_model_only"
+
+        model_id = "OD_Pod_002"
+        version_number = "1.00"
+
+        # app_name = "NeuralaHiFiV2Test0"
+        # app_version= "1.0.0"
         response = self.client.Request(
             url=f"/deploy_configs",
             method="POST",
-            payload={'config_id': configuration_name,
-                'description': "test configuration creation from REST",
-                'edge_apps': [{
-                'app_name': app_name,
-                'app_version': app_version
-            }]},
+            payload={
+                "config_id": configuration_name,
+                "description": "test configuration creation from REST",
+                "models": [{"model_id": model_id, "version_number": version_number}],
+                #'edge_apps': [{
+                #    'app_name': app_name,
+                #    'app_version': app_version
+                #    }]
+            },
         )
         print(jsonify(response))
 
         self.configuration_name = configuration_name
         self.deploy_configuration()
-
 
     def deploy_configuration(self):
         """
@@ -271,16 +266,16 @@ class DeviceProcessor:
             # Wait for deploys
             while not self._check_deploy_finished():
                 continue
-            #response = self.client.Request(
+            # response = self.client.Request(
             #    url=f"/devices/{self.device_id}/eventlogs",
             #    method="GET"
-            #)
-            #print(jsonify(response))
-            #response = self.client.Request(
+            # )
+            # print(jsonify(response))
+            # response = self.client.Request(
             #    url=f"/devices/{self.device_id}/applogs",
             #    method="GET"
-            #)
-            #print(jsonify(response))
+            # )
+            # print(jsonify(response))
             return
 
         description = f"Deploying {config_id} to {self.device_id} from CLI"
@@ -288,11 +283,11 @@ class DeviceProcessor:
         response = self.client.Request(
             url=f"/deploy_configs/{config_id}/apply",
             method="POST",
-            payload={'device_ids': [str(self.device_id)]},
+            payload={"device_ids": [str(self.device_id)]},
         )
         print(jsonify(response))
-        if 'deploy_id' in response:
-            while not self._check_deploy_finished(filter_by_id=[response['deploy_id']]):
+        if "deploy_id" in response:
+            while not self._check_deploy_finished(filter_by_id=[response["deploy_id"]]):
                 continue
 
     def deploy_model(self):
@@ -302,19 +297,23 @@ class DeviceProcessor:
         if not self.device_id:
             self.get_device_info(verbose=False)
 
-        response = self.client.Request(
-            url=f"/models",
-            method="GET"
-        )
+        response = self.client.Request(url=f"/models", method="GET")
         print(jsonify(response))
 
         model_id = "OD_Pod_002"
+        version_number = "1.00"
+
         response = self.client.Request(
-            url=f"/models/{model_id}/devices/{self.device_id}/deploy",
-            method="GET"
+            url=f"/models/{model_id}/dnn_params?version_number={version_number}",
+            method="GET",
         )
         print(jsonify(response))
 
+        response = self.client.Request(
+            url=f"/models/{model_id}/devices/{self.device_id}/deploy?version_number={version_number}",
+            method="POST",
+        )
+        print(jsonify(response))
 
     def download_logs(self, topNLogs: int = 50):
         """
@@ -401,7 +400,9 @@ class DeviceProcessor:
         stage_patterns = stage_patterns or ["stage_*"]
 
         # Find methods starting with 'stage' and filter by patterns
-        all_stage_methods = [method_name for method_name in dir(self) if method_name.startswith("stage_")]
+        all_stage_methods = [
+            method_name for method_name in dir(self) if method_name.startswith("stage_")
+        ]
         filtered_methods = []
 
         # Apply glob filtering
@@ -409,7 +410,10 @@ class DeviceProcessor:
             filtered_methods.extend(fnmatch.filter(all_stage_methods, pattern))
 
         # Remove duplicates and sort by line number (order of definition)
-        filtered_methods = sorted(set(filtered_methods), key=lambda method: getattr(self, method).__code__.co_firstlineno)
+        filtered_methods = sorted(
+            set(filtered_methods),
+            key=lambda method: getattr(self, method).__code__.co_firstlineno,
+        )
 
         # Execute the filtered methods
         for method_name in filtered_methods:
@@ -417,12 +421,15 @@ class DeviceProcessor:
             print(f"Executing {stage_method.__name__}")
             stage_method()
 
+
 if __name__ == "__main__":
     print("Initiating Console connection")
     args = parser.parse_args()
     client = create_client(args.aitrios_secrets)
 
-    processor = DeviceProcessor(client, device_name=args.device_name, configuration_name=args.configuration_name)
+    processor = DeviceProcessor(
+        client, device_name=args.device_name, configuration_name=args.configuration_name
+    )
 
     try:
         print(f"{args.stages}")
