@@ -29,6 +29,13 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
+    "--configuration_name",
+    "-C",
+    type=str,
+    help="Configuration Name to search for",
+    required=False,
+)
+parser.add_argument(
     "--stages",
     action='append',
     help="Glob patterns to select specific stages (e.g., 'stage_*', 'stage_start_*')"
@@ -80,16 +87,18 @@ class DeviceProcessor:
     in the oder they are provided.
     """
 
-    def __init__(self, client, device_name):
+    def __init__(self, client, device_name, configuration_name):
         """
         Initialize a processor for device named device_name
         using client API.
         """
         self.client = client
         self.device_name = device_name
+        self.configuration_name = configuration_name
         self.device_id = None
+        self.config_id = None
 
-    def get_device_info(self):
+    def get_device_info(self, verbose:bool=True):
         """
         Retrieves the information about the device selected
         """
@@ -109,7 +118,8 @@ class DeviceProcessor:
             raise Exception(f"Device {self.device_name} not found.")
 
         self.device_id = devices[0]["device_id"]
-        print(jsonify(devices[0]))
+        if verbose:
+            print(jsonify(devices[0]))
 
     def retrieve_command_parameters(self):
         """
@@ -174,6 +184,138 @@ class DeviceProcessor:
         )
         print(jsonify(result))
 
+    def get_edge_apps(self):
+        """
+        Get the list of edge apps
+        """
+        response = self.client.Request(
+            url="/edge_apps",
+            method="GET"
+        )
+        print(jsonify(response))
+
+    def get_deploy_configurations(self):
+        """
+        Get the list of deploy configurations
+        """
+        response = self.client.Request(
+            url="/deploy_configs",
+            method="GET"
+        )
+        print(jsonify(response))
+
+        if self.configuration_name:
+            for config in response["deploy_configs"]:
+                if self.configuration_name in config["config_id"]:
+                    return config["config_id"]
+        return None
+
+    def _check_deploy_finished(self, filter_by_id:List[str]=None):
+        """
+        Check if a deployment is in progress
+
+        param: filter_by_id: list of deploy ids to check
+        """
+
+        # Get all deploys
+        response = self.client.Request(
+            url=f"/devices/{self.device_id}/deploys",
+            method="GET"
+        )
+
+        # For each deploy config check if it's finished
+        for config in response["deploys"]:
+            if filter_by_id and not config['deploy_id'] in filter_by_id:
+                continue
+
+            # Still deploying something
+            if 'deploy' in config['deploy_status']:
+                print(jsonify(config))
+                return False
+
+        print("All deployments are completed")
+        print(jsonify(response))
+        return True
+
+    def create_deploy_configuration(self):
+        self.get_edge_apps()
+        configuration_name = 'testconfigREST'
+        app_name = "NeuralaHiFiV2Test0"
+        app_version= "1.0.0"
+        response = self.client.Request(
+            url=f"/deploy_configs",
+            method="POST",
+            payload={'config_id': configuration_name,
+                'description': "test configuration creation from REST",
+                'edge_apps': [{
+                'app_name': app_name,
+                'app_version': app_version
+            }]},
+        )
+        print(jsonify(response))
+
+        self.configuration_name = configuration_name
+        self.deploy_configuration()
+
+
+    def deploy_configuration(self):
+        """
+        Deploy a pre-configured deployment configuration to the device
+        """
+        config_id = self.get_deploy_configurations()
+        if not self.device_id:
+            self.get_device_info(verbose=False)
+
+        if not config_id:
+            print("Skipping deploy, no configuration provided or found.")
+            # Wait for deploys
+            while not self._check_deploy_finished():
+                continue
+            #response = self.client.Request(
+            #    url=f"/devices/{self.device_id}/eventlogs",
+            #    method="GET"
+            #)
+            #print(jsonify(response))
+            #response = self.client.Request(
+            #    url=f"/devices/{self.device_id}/applogs",
+            #    method="GET"
+            #)
+            #print(jsonify(response))
+            return
+
+        description = f"Deploying {config_id} to {self.device_id} from CLI"
+        print(description)
+        response = self.client.Request(
+            url=f"/deploy_configs/{config_id}/apply",
+            method="POST",
+            payload={'device_ids': [str(self.device_id)]},
+        )
+        print(jsonify(response))
+        if 'deploy_id' in response:
+            while not self._check_deploy_finished(filter_by_id=[response['deploy_id']]):
+                continue
+
+    def deploy_model(self):
+        """
+        Deploy model
+        """
+        if not self.device_id:
+            self.get_device_info(verbose=False)
+
+        response = self.client.Request(
+            url=f"/models",
+            method="GET"
+        )
+        print(jsonify(response))
+
+        model_id = "OD_Pod_002"
+        response = self.client.Request(
+            url=f"/models/{model_id}/devices/{self.device_id}/deploy",
+            method="GET"
+        )
+        print(jsonify(response))
+
+
     def download_logs(self, topNLogs: int = 50):
         """
         Download ANY last topNLogs from the camera, could be from an older run
@@ -211,9 +353,25 @@ class DeviceProcessor:
         print(jsonify(response))
 
     # Example user-defined stages
+    def stage_edge_apps(self):
+        print("Stage: Get edge apps")
+        self.get_edge_apps()
+
     def stage_initialize(self):
         print("Stage: Initializing device")
         self.get_device_info()
+
+    def stage_create_deploy_configuration(self):
+        print("Stage: Create Deploy configuration")
+        self.create_deploy_configuration()
+
+    def stage_deploy_configuration(self):
+        print("Stage: Deploy configuration")
+        self.deploy_configuration()
+
+    def stage_deploy_model(self):
+        print("Stage: Deploy model")
+        self.deploy_model()
 
     def stage_start_logs(self):
         print("Stage: Starting logs")
@@ -264,7 +422,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     client = create_client(args.aitrios_secrets)
 
-    processor = DeviceProcessor(client, args.device_name)
+    processor = DeviceProcessor(client, device_name=args.device_name, configuration_name=args.configuration_name)
 
     try:
         print(f"{args.stages}")
