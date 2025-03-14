@@ -151,40 +151,31 @@ class AitriosAccess:
 
 def do_everything(arguments):
     timestamp = datetime.now().strftime(r"%Y%m%d%H%M%S")
-    access = AitriosAccess(arguments.secrets)
+    if not arguments.mock:
+        access = AitriosAccess(arguments.secrets)
     print(f"Extracting {arguments.model_type} model from \"{arguments.bundle}\"...")
     model_name, model_data = extract_model_from_brain_builder_bundle(arguments.bundle, arguments.model_type)
     model_name = os.path.splitext(model_name)[0]
     model_name = f"{model_name}.{timestamp}.{arguments.model_type}"
     print(f"Uploading model as \"{model_name}\"...")
-    file_id = access.upload_non_converted_model_data(model_data, model_name)
-    print(f"The file ID of the uploaded model is \"{file_id}\".")
+    if not arguments.mock:
+        file_id = access.upload_non_converted_model_data(model_data, model_name)
+        print(f"The file ID of the uploaded model is \"{file_id}\".")
     print("Importing model...")
-    access.import_model(file_id, model_name, f"A {arguments.model_type} model uploaded by an automated deployment script.")
+    if not arguments.mock:
+        access.import_model(file_id, model_name, f"A {arguments.model_type} model uploaded by an automated deployment script.")
     print("Converting model...")
-    access.convert_model(model_name)
+    if not arguments.mock:
+        access.convert_model(model_name)
     package_name = os.path.basename(arguments.package)
     package_name = os.path.splitext(package_name)[0]
     print(f"Uploading Edge App Package \"{arguments.package}\" as \"{package_name}\"...")
-    file_id = access.upload_edge_app_package(arguments.package, package_name)
-    print(f"The file ID of the uploaded Edge App Package is \"{file_id}\".")
+    if not arguments.mock:
+        file_id = access.upload_edge_app_package(arguments.package, package_name)
+        print(f"The file ID of the uploaded Edge App Package is \"{file_id}\".")
   # create_deployment_configuration()
   # somehow_deploy_said_configuration()
     print("Done.")
-
-def mock_everything(arguments):
-    timestamp = datetime.now().strftime(r"%Y%m%d%H%M%S")
-    print(f"[MOCK] Extracting {arguments.model_type} model from \"{arguments.bundle}\"...")
-    model_name, model_data = extract_model_from_brain_builder_bundle(arguments.bundle, arguments.model_type)
-    model_name = os.path.splitext(model_name)[0]
-    model_name = f"{model_name}.{timestamp}.{arguments.model_type}"
-    print(f"[MOCK] Uploading model as \"{model_name}\"...")
-    print("[MOCK] Importing model...")
-    print("[MOCK] Converting model...")
-    package_name = os.path.basename(arguments.package)
-    package_name = os.path.splitext(package_name)[0]
-    print(f"[MOCK] Uploading Edge App Package \"{arguments.package}\" as \"{package_name}\"...")
-    print("[MOCK] Done.")
 
 if __name__ == "__main__":
     possible_model_types = ["keras", "onnx", "tflite"]
@@ -199,9 +190,6 @@ if __name__ == "__main__":
         parser.print_help()
         exit(0)
     arguments = parser.parse_args()
-    if arguments.mock:
-        mock_everything(arguments)
-        exit(0)
     try:
         do_everything(arguments)
     except Exception as exception:
