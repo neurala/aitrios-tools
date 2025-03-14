@@ -123,6 +123,13 @@ class AitriosAccess:
                 raise Exception(response)
             return response['file_info']['file_id']
 
+    def create_deployment_configuration(self, model_id, application_name):
+        model_information = {'model_id':model_id, 'version_number':"1.0.0"}
+        edge_application = {'app_name':application_name, 'app_version':"1.0.0"}
+        description = "A deployment configuration created by an automated deployment script."
+        payload = {'config_id':model_id, 'models':[model_information], 'edge_apps':[edge_application], 'description':description}
+        print(f"This method does not work at the moment, but the current payload looks like this.\n{payload}")
+
 '''
     def upload_configuration(self, configuration_file_path, name):
         with open(configuration_file_path) as configuration_file:
@@ -130,22 +137,8 @@ class AitriosAccess:
             encoded_data = b64encode(data).decode('utf-8')
             payload = {'file_name':name, 'parameter':encoded_data}
             response = self.client.RegistCommandParameterFile(payload)
-            print(response)
-            return response_is_success(response)
-
-    def create_deployment_configuration(self):
-        pass
-
-    def debug(self):
-        response = self.client.GetCommandParameterFile()
-        if not response_is_success(response):
-            print(response)
-            return
-        parameters = response['parameter_list']
-        count = len(apps)
-        print(f"There are {count} parameter files.")
-        for parameter in parameters:
-            print(parameter)
+            if not response_is_success(response):
+                raise Exception(response)
 '''
 
 
@@ -173,8 +166,13 @@ def do_everything(arguments):
     if not arguments.mock:
         file_id = access.upload_edge_app_package(arguments.package, package_name)
         print(f"The file ID of the uploaded Edge App Package is \"{file_id}\".")
-  # create_deployment_configuration()
-  # somehow_deploy_said_configuration()
+    print("Creating deployment configuration...")
+    if not arguments.mock:
+        access.create_deployment_configuration(model_name, package_name)
+    print("Deploying configuration to device...")
+    if not arguments.mock:
+      # somehow_deploy_said_configuration()
+        pass
     print("Done.")
 
 if __name__ == "__main__":
