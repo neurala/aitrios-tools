@@ -115,14 +115,20 @@ class AitriosAccess:
                 print(response)
                 raise Exception("Something went wrong during model conversion. Check whether the response above is unexpected.")
 
-    def upload_edge_app_package(self, package, name):
-        with open(package, 'rb') as file:
-            contents = file.read()
-            response = self.client.UploadFile(type_code="edge_app_pkg", file=contents, file_name=name)
-            if not response_is_success(response):
-                raise Exception(response)
-            return response['file_info']['file_id']
+    def upload_edge_app_package(self, package):
+        package = Path(package)
+        contents = package.read_bytes()
+        name = package.stem
+        response = self.client.UploadFile(type_code="edge_app_pkg", file=contents, file_name=name)
+        if not response_is_success(response):
+            raise Exception(response)
+        file_id = response['file_info']['file_id']
+        payload = {'app_name':name, 'edge_app_package_id':file_id, 'description':"An Edge App Package uploaded by an automated deployment script."}
+        response = self.client.Request(url="/edge_apps", method='POST', payload=payload)
+        if not response_is_success(response):
+            raise Exception(response)
 
+'''
     def create_deployment_configuration(self, model_id, application_name):
         model_information = {'model_id':model_id, 'version_number':"1.0.0"}
         edge_application = {'app_name':application_name, 'app_version':"1.0.0"}
@@ -130,7 +136,6 @@ class AitriosAccess:
         payload = {'config_id':model_id, 'models':[model_information], 'edge_apps':[edge_application], 'description':description}
         print(f"This method does not work at the moment, but the current payload looks like this.\n{payload}")
 
-'''
     def upload_configuration(self, configuration_file_path, name):
         with open(configuration_file_path) as configuration_file:
             data = configuration_file.read().encode('utf-8')
@@ -160,19 +165,9 @@ def do_everything(arguments):
     print("Converting model...")
     if not arguments.mock:
         access.convert_model(model_name)
-    package_name = os.path.basename(arguments.package)
-    package_name = os.path.splitext(package_name)[0]
-    print(f"Uploading Edge App Package \"{arguments.package}\" as \"{package_name}\"...")
+    print(f"Uploading Edge App Package \"{arguments.package}\"...")
     if not arguments.mock:
-        file_id = access.upload_edge_app_package(arguments.package, package_name)
-        print(f"The file ID of the uploaded Edge App Package is \"{file_id}\".")
-    print("Creating deployment configuration...")
-    if not arguments.mock:
-        access.create_deployment_configuration(model_name, package_name)
-    print("Deploying configuration to device...")
-    if not arguments.mock:
-      # somehow_deploy_said_configuration()
-        pass
+        access.upload_edge_app_package(arguments.package)
     print("Done.")
 
 if __name__ == "__main__":
