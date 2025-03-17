@@ -63,7 +63,9 @@ def response_is_success(response):
 class AitriosAccess:
     def __init__(self, secrets):
         secrets = Path(secrets)
-        schema = Path("execute/json_schemas/console_configuration_schema.json")
+        self_path = os.path.realpath(__file__)
+        here = os.path.dirname(self_path)
+        schema = Path(os.path.dirname(here) + "/execute/json_schemas/console_configuration_schema.json")
         config = load_configuration_file(secrets, schema)
         console_endpoint = config["console_endpoint"]
         client_id = config["client_id"]
