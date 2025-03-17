@@ -147,10 +147,10 @@ class AitriosAccess:
 '''
 
 
-def do_everything(arguments):
-    timestamp = datetime.now().strftime(r"%Y%m%d%H%M%S")
-    if not arguments.mock:
-        access = AitriosAccess(arguments.secrets)
+timestamp = datetime.now().strftime(r"%Y%m%d%H%M%S")
+
+
+def upload_bundle(access, arguments):
     print(f"Extracting {arguments.model_type} model from \"{arguments.bundle}\"...")
     model_name, model_data = extract_model_from_brain_builder_bundle(arguments.bundle, arguments.model_type)
     model_name = os.path.splitext(model_name)[0]
@@ -165,26 +165,36 @@ def do_everything(arguments):
     print("Converting model...")
     if not arguments.mock:
         access.convert_model(model_name)
+
+
+def upload_edge_app(access, arguments):
     print(f"Uploading Edge App Package \"{arguments.package}\"...")
     if not arguments.mock:
         access.upload_edge_app_package(arguments.package)
     print("Done.")
 
+
 if __name__ == "__main__":
-    possible_model_types = ["keras", "onnx", "tflite"]
     parser = ArgumentParser(add_help=False)
     parser.add_argument("--help", "-h", action='help', help="Show this help message and exit.")
-    parser.add_argument("--bundle", type=Path, required=True, help="A path to the BrainBuilder bundle to upload.")
-    parser.add_argument("--model-type", type=str, required=True, choices=possible_model_types, help="The type of model in the bundle to upload.")
-    parser.add_argument("--package", type=Path, required=True, help="A path to the Edge App Package to upload.")
+    parser.add_argument("--bundle", type=Path, required=False, help="A path to the BrainBuilder bundle to upload.")
+    parser.add_argument("--model-type", type=str, required=False, choices=["keras", "onnx", "tflite"], help="The type of model in the bundle to upload.")
+    parser.add_argument("--package", type=Path, required=False, help="A path to the Edge App Package to upload.")
     parser.add_argument("--secrets", type=Path, required=True, help="Your deepest secrets.")
     parser.add_argument("--dry-run", "--mock", action='store_true', dest="mock", help="Print what would happen if this were not a dry run.")
     if "-h" in sys.argv or "--help" in sys.argv:
         parser.print_help()
         exit(0)
     arguments = parser.parse_args()
+    access = AitriosAccess(arguments.secrets) if not arguments.mock else None
     try:
-        do_everything(arguments)
+        if arguments.bundle is not None:
+            if arguments.model_type is None:
+                print("Please specify a model type.")
+                exit(2)
+            upload_bundle(access, arguments)
+        if arguments.package is not None:
+            upload_edge_app(access, arguments)
     except Exception as exception:
         print(exception)
         exit(1)
