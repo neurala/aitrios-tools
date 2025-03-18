@@ -1,6 +1,7 @@
 # AITRIOS Deployment Tool
 
 Use this tool to upload+convert models and to upload Edge App Packages.
+This tool is specific to Console V2.
 
 ## Usage Examples
 
