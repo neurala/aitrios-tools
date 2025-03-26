@@ -21,4 +21,4 @@ venv/bin/python3 deploy.py --secrets 'secrets.json' --package '/path/to/SomeEdge
 venv/bin/python3 deploy.py --secrets 'secrets.json' --enable-logging 'some-module-id' --device 'some-device-id'
 ```
 
-Both operations can be combined into one.
+Operations can be combined into one.
