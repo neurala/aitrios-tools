@@ -16,6 +16,9 @@ venv/bin/python3 deploy.py --secrets 'secrets.json' --bundle '/path/to/some-bund
 
 # Use this to upload an Edge App Package.
 venv/bin/python3 deploy.py --secrets 'secrets.json' --package '/path/to/SomeEdgeApp.zip'
+
+# Use this to enable logging on a given device+deployment.
+venv/bin/python3 deploy.py --secrets 'secrets.json' --enable-logging 'some-module-id' --device 'some-device-id'
 ```
 
 Both operations can be combined into one.

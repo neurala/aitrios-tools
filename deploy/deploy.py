@@ -1,3 +1,4 @@
+import argparse
 import console_access_library
 import json
 import jsonschema
@@ -130,14 +131,37 @@ class AitriosAccess:
         if not response_is_success(response):
             raise Exception(response)
 
-'''
-    def create_deployment_configuration(self, model_id, application_name):
+    def create_deployment_configuration(self, config_id, model_id, application_name):
         model_information = {'model_id':model_id, 'version_number':"1.0.0"}
         edge_application = {'app_name':application_name, 'app_version':"1.0.0"}
         description = "A deployment configuration created by an automated deployment script."
-        payload = {'config_id':model_id, 'models':[model_information], 'edge_apps':[edge_application], 'description':description}
-        print(f"This method does not work at the moment, but the current payload looks like this.\n{payload}")
+        payload = {'config_id':config_id, 'models':[model_information], 'edge_apps':[edge_application], 'description':description}
+        response = self.client.Request(url="/deploy_configs", method='POST', payload=payload)
+        print(response)
 
+    def deploy_configuration(self, config_id, device_id):
+        response = self.client.DeployByConfiguration(config_id=config_id, device_ids=device_id)
+        print(response)
+
+    def undeploy_edge_app_from_device(self, device_id):
+        device_ids = [device_id]
+        response = self.client.UndeployDeviceApp(device_ids=device_ids)
+        response = json.dumps(response, indent=4)
+        print(response)
+
+    def print_configurations(self):
+        response = self.client.GetDeployConfigurations()
+        response = json.dumps(response, indent=4)
+        print(response)
+
+    def enable_logging(self, device_id, module_id):
+        payload = {'enable':True}
+        response = self.client.Request(url=f"/devices/{device_id}/modules/{module_id}/applog", method='PUT', device_id=device_id, payload=payload)
+        response = json.dumps(response, indent=4)
+        if not response_is_success(response):
+            raise Exception(response)
+
+'''
     def upload_configuration(self, configuration_file_path, name):
         with open(configuration_file_path) as configuration_file:
             data = configuration_file.read().encode('utf-8')
@@ -155,8 +179,8 @@ timestamp = datetime.now().strftime(r"%Y%m%d%H%M%S")
 def upload_bundle(access, arguments):
     print(f"Extracting {arguments.model_type} model from \"{arguments.bundle}\"...")
     model_name, model_data = extract_model_from_brain_builder_bundle(arguments.bundle, arguments.model_type)
-    model_name = os.path.splitext(model_name)[0]
-    model_name = f"{model_name}.{timestamp}.{arguments.model_type}"
+  # model_name = os.path.splitext(model_name)[0]
+  # model_name = f"{model_name}.{timestamp}.{arguments.model_type}"
     print(f"Uploading model as \"{model_name}\"...")
     if not arguments.mock:
         file_id = access.upload_non_converted_model_data(model_data, model_name)
@@ -176,20 +200,41 @@ def upload_edge_app(access, arguments):
     print("Done.")
 
 
+def enable_logging(access, device_id, module_id):
+    print("Enabling logs...")
+    if not arguments.mock:
+        access.enable_logging(device_id, module_id)
+    print("Done.")
+
+
+def debug(access):
+  # access.create_deployment_configuration("DeneukiTestConfiguration", "b6539619-7eb7-4238-a7ec-45188e3df9bb-static.20250320104434.tflite", "EdgeAppTest")
+  # access.deploy_configuration("DeneukiTestConfiguration", "sid-100A50500A2014013664012000000000")
+  # access.undeploy_edge_app_from_device("sid-100A50500A2014013664012000000000")
+  # access.enable_logging("sid-100A50500A2014013664012000000000", "b11240bc-5b24-4c03-8b2f-d4658c9dcee5")
+    pass
+
+
 if __name__ == "__main__":
     parser = ArgumentParser(add_help=False)
     parser.add_argument("--help", "-h", action='help', help="Show this help message and exit.")
+    parser.add_argument("--secrets", type=Path, required=True, help="Your deepest secrets.")
     parser.add_argument("--bundle", type=Path, required=False, help="A path to the BrainBuilder bundle to upload.")
     parser.add_argument("--model-type", type=str, required=False, choices=["keras", "onnx", "tflite"], help="The type of model in the bundle to upload.")
     parser.add_argument("--package", type=Path, required=False, help="A path to the Edge App Package to upload.")
-    parser.add_argument("--secrets", type=Path, required=True, help="Your deepest secrets.")
+    parser.add_argument("--enable-logging", type=str, required=False, dest="module_id", help="The module ID on which to enable logging.")
+    parser.add_argument("--device", type=str, required=False, help="A device ID.")
     parser.add_argument("--dry-run", "--mock", action='store_true', dest="mock", help="Print what would happen if this were not a dry run.")
+    parser.add_argument("--debug", action='store_true', help=argparse.SUPPRESS)
     if "-h" in sys.argv or "--help" in sys.argv:
         parser.print_help()
         exit(0)
     arguments = parser.parse_args()
     access = AitriosAccess(arguments.secrets) if not arguments.mock else None
     try:
+        if arguments.debug:
+            debug(access)
+            exit(0)
         if arguments.bundle is not None:
             if arguments.model_type is None:
                 print("Please specify a model type.")
@@ -197,6 +242,11 @@ if __name__ == "__main__":
             upload_bundle(access, arguments)
         if arguments.package is not None:
             upload_edge_app(access, arguments)
+        if arguments.module_id is not None:
+            if arguments.device is None:
+                print("Please specify a device.")
+                exit(2)
+            enable_logging(access, arguments.device, arguments.module_id)
     except Exception as exception:
         print(exception)
         exit(1)
