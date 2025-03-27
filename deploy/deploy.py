@@ -157,7 +157,6 @@ class AitriosAccess:
     def enable_logging(self, device_id, module_id):
         payload = {'enable':True}
         response = self.client.Request(url=f"/devices/{device_id}/modules/{module_id}/applog", method='PUT', device_id=device_id, payload=payload)
-        response = json.dumps(response, indent=4)
         if not response_is_success(response):
             raise Exception(response)
 
