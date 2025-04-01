@@ -22,3 +22,7 @@ venv/bin/python3 upload.py --secrets 'secrets.json' --enable-logging 'some-modul
 ```
 
 Operations can be combined into one.
+
+## TODO
+
+Enabling logging should not belong to a script called `upload.py`. Either **(0)** rename this "module" to something that would encapsulate both uploading and execution, **(1)** put `AitriosAccess` into its own module and make separate scripts (e.g. `upload.py` and `execute.py`), or **(2)** add a `--v2` flag to the existing tools and smush the functionality into them.
