@@ -1,6 +1,8 @@
 # AITRIOS V2 Uploader Tool
 
 Use this tool to upload+convert models and to upload Edge App Packages.
+This tool temporarily also contains functionality for controlling execution and logging. See the **TODO** below.
+
 This tool is specific to Console V2.
 
 ## Usage Examples
@@ -19,10 +21,16 @@ venv/bin/python3 upload.py --secrets 'secrets.json' --package '/path/to/SomeEdge
 
 # Use this to enable logging on a given device+deployment.
 venv/bin/python3 upload.py --secrets 'secrets.json' --enable-logging 'some-module-id' --device 'some-device-id'
+
+# Use this to start inference.
+venv/bin/python3 upload.py --secrets 'secrets.json' --start-inference 'some-module-id' --device 'some-device-id'
+
+# Use this to stop inference.
+venv/bin/python3 upload.py --secrets 'secrets.json' --stop-inference 'some-module-id' --device 'some-device-id'
 ```
 
 Operations can be combined into one.
 
 ## TODO
 
-Enabling logging should not belong to a script called `upload.py`. Either **(0)** rename this "module" to something that would encapsulate both uploading and execution, **(1)** put `AitriosAccess` into its own module and make separate scripts (e.g. `upload.py` and `execute.py`), or **(2)** add a `--v2` flag to the existing tools and smush the functionality into them.
+Enabling logging and controlling inference should not belong to a script called `upload.py`. Either **(0)** rename this "module" to something that would encapsulate both uploading and execution, **(1)** put `AitriosAccess` into its own module and make separate scripts (e.g. `upload.py` and `execute.py`), or **(2)** add a `--v2` flag to the existing tools and smush the functionality into them.

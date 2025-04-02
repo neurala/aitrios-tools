@@ -1,0 +1,11 @@
+{
+  "property": {
+    "configuration": {
+      "edge_app": {
+        "common_settings": {
+          "process_state": 2
+        }
+      }
+    }
+  }
+}

@@ -160,6 +160,30 @@ class AitriosAccess:
         if not response_is_success(response):
             raise Exception(response)
 
+    def start_inference(self, device_id, module_id):
+        self_path = os.path.realpath(__file__)
+        here = os.path.dirname(self_path)
+
+        with open(f"{here}/start-inference.json", 'r') as file:
+            payload = file.read()
+
+        response = self.client.Request(url=f"/devices/{device_id}/modules/{module_id}", method='PATCH', device_id=device_id, payload=payload)
+
+        if not response_is_success(response):
+            raise Exception(response)
+
+    def stop_inference(self, device_id, module_id):
+        self_path = os.path.realpath(__file__)
+        here = os.path.dirname(self_path)
+
+        with open(f"{here}/stop-inference.json", 'r') as file:
+            payload = file.read()
+
+        response = self.client.Request(url=f"/devices/{device_id}/modules/{module_id}", method='PATCH', device_id=device_id, payload=payload)
+
+        if not response_is_success(response):
+            raise Exception(response)
+
 '''
     def upload_configuration(self, configuration_file_path, name):
         with open(configuration_file_path) as configuration_file:
@@ -177,32 +201,62 @@ timestamp = datetime.now().strftime(r"%Y%m%d%H%M%S")
 
 def upload_bundle(access, arguments):
     print(f"Extracting {arguments.model_type} model from \"{arguments.bundle}\"...")
+
     model_name, model_data = extract_model_from_brain_builder_bundle(arguments.bundle, arguments.model_type)
   # model_name = os.path.splitext(model_name)[0]
   # model_name = f"{model_name}.{timestamp}.{arguments.model_type}"
+
     print(f"Uploading model as \"{model_name}\"...")
+
     if not arguments.mock:
         file_id = access.upload_non_converted_model_data(model_data, model_name)
+
         print(f"The file ID of the uploaded model is \"{file_id}\".")
+
     print("Importing model...")
+
     if not arguments.mock:
         access.import_model(file_id, model_name, f"A {arguments.model_type} model uploaded by an automated deployment script.")
+
     print("Converting model...")
+
     if not arguments.mock:
         access.convert_model(model_name)
 
 
 def upload_edge_app(access, arguments):
     print(f"Uploading Edge App Package \"{arguments.package}\"...")
+
     if not arguments.mock:
         access.upload_edge_app_package(arguments.package)
+
     print("Done.")
 
 
 def enable_logging(access, device_id, module_id):
     print("Enabling logs...")
+
     if not arguments.mock:
         access.enable_logging(device_id, module_id)
+
+    print("Done.")
+
+
+def start_inference(access, device_id, module_id):
+    print("Starting inference...")
+
+    if not arguments.mock:
+        access.start_inference(device_id, module_id)
+
+    print("Done.")
+
+
+def stop_inference(access, device_id, module_id):
+    print("Stopping inference...")
+
+    if not arguments.mock:
+        access.stop_inference(device_id, module_id)
+
     print("Done.")
 
 
@@ -222,30 +276,55 @@ if __name__ == "__main__":
     parser.add_argument("--model-type", type=str, required=False, choices=["keras", "onnx", "tflite"], help="The type of model in the bundle to upload.")
     parser.add_argument("--package", type=Path, required=False, help="A path to the Edge App Package to upload.")
     parser.add_argument("--enable-logging", type=str, required=False, dest="module_id", help="The module ID on which to enable logging.")
+    parser.add_argument("--start-inference", type=str, required=False, help="Starts an inference.")
+    parser.add_argument("--stop-inference", type=str, required=False, help="Stops an inference.")
     parser.add_argument("--device", type=str, required=False, help="A device ID.")
     parser.add_argument("--dry-run", "--mock", action='store_true', dest="mock", help="Print what would happen if this were not a dry run.")
     parser.add_argument("--debug", action='store_true', help=argparse.SUPPRESS)
+
     if "-h" in sys.argv or "--help" in sys.argv:
         parser.print_help()
         exit(0)
+
     arguments = parser.parse_args()
     access = AitriosAccess(arguments.secrets) if not arguments.mock else None
+
     try:
         if arguments.debug:
             debug(access)
             exit(0)
+
         if arguments.bundle is not None:
             if arguments.model_type is None:
                 print("Please specify a model type.")
                 exit(2)
             upload_bundle(access, arguments)
+
         if arguments.package is not None:
             upload_edge_app(access, arguments)
+
         if arguments.module_id is not None:
             if arguments.device is None:
                 print("Please specify a device.")
                 exit(2)
             enable_logging(access, arguments.device, arguments.module_id)
+
+        if arguments.start_inference:
+            if arguments.stop_inference:
+                print("Cannot simultaneously start and stop an inference.")
+            if arguments.device is None:
+                print("Please specify a device.")
+                exit(2)
+            start_inference(access, arguments.device, arguments.module_id)
+
+        if arguments.stop_inference:
+            if arguments.start_inference:
+                print("Cannot simultaneously stop and start an inference.")
+            if arguments.device is None:
+                print("Please specify a device.")
+                exit(2)
+            stop_inference(access, arguments.device, arguments.module_id)
+
     except Exception as exception:
         print(exception)
         exit(1)
