@@ -1,0 +1,4 @@
+jsonschema>=4.6.2
+console-access-api @ git+https://github.com/SonySemiconductorSolutions/aitrios-sample-application-keypoint-detection@v1.0.1#egg=console-access-api&subdirectory=backend/lib/console-access-api
+git+https://github.com/SonySemiconductorSolutions/aitrios-sdk-console-access-lib-python@v1.0.0#egg=aitrios_console_rest_client_sdk_primitive&subdirectory=lib/python-client
+git+https://github.com/SonySemiconductorSolutions/aitrios-sdk-console-access-lib-python@v1.0.0#egg=console_access_library&subdirectory=src
